@@ -18,7 +18,7 @@ Functions:
 * `aggregate_pol_parties`: Aggregates expert data by political party.
 
 ### Missing Data per Column
-![Correlation Heatmap](imgs/missing_data_per_column.png)
+![Missing data](imgs/missing_data_per_column.png)
 
 ## Task 2: Dimensionality Reduction with PCA
 
@@ -30,7 +30,7 @@ Functions:
 * `plot_PCA`: Plots PCA results for a visual representation.
 
 ### Results of dimensionality reduction with PCA
-![Correlation Heatmap](imgs/task_2_scatterplot.png)
+![PCA scatterplot](imgs/task_2_scatterplot.png)
 
 ## Task 3: Estimate the distribution of the 2D points and generate a random sample of 10 new political parties
 
@@ -38,6 +38,9 @@ Estimate the distribution of the 2D PCA-transformed data points using Gaussian K
 
 Functions:
 * `generate_new_samples`: Generates new samples using Gaussian Kernel Density Estimation.
+
+### Estimated distribution of the 2D points
+![Estimated distribution](imgs/bivariate_dist.png)
 
 ## Task 4: Map 2D random samples back to high-dimensional space
 
@@ -54,5 +57,5 @@ Functions:
 * `plot_valid_area_2d`
 
 ### Valid area of the high-dimensional space in the 2D space
-![Correlation Heatmap](imgs/task_5_2d_bound.png)
+![Valid area](imgs/task_5_2d_bound.png)
 
