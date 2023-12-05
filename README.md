@@ -1,7 +1,7 @@
 # Mikko Närhi Nordea Data Science Recruitment Assignment
 
 ## Overview
-This project involves the analysis of 2019 Chapel Hill expert survey political party data using Python. It focuses on preprocessing, scaling, dimensionality reduction with PCA, and generating new samples through statistical methods. The objective is to understand political party dynamics and to extrapolate or interpolate new data points.
+This project involves the analysis of 2019 Chapel Hill expert survey political party data using Python. It focuses on preprocessing, scaling, dimensionality reduction with PCA, generating new samples through statistical methods and painting the valid area from the high-dimensional space into 2D PCA-transformed space.
 
 ## Installation
 TODO Complete Dockerization
