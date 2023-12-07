@@ -16,7 +16,7 @@ DATA_DIR = os.path.join(BASE_DIR, 'data')
 # -------------- PREPROCESSING --------------
 # -------------------------------------------
 
-def get_file_path(filename:str):
+def get_file_path(filename:str) -> str:
     return os.path.join(DATA_DIR, filename)
 
 def load_data(expert_file_name:str, party_file_name:str) -> tuple[pd.DataFrame, pd.DataFrame]:
@@ -36,29 +36,6 @@ def load_data(expert_file_name:str, party_file_name:str) -> tuple[pd.DataFrame, 
     party_raw_data = pd.read_csv(get_file_path(party_file_name))
 
     return (expert_raw_data, party_raw_data)
-
-def plot_missing_data_per_column(raw_data:pd.DataFrame) -> None:
-    """
-    Visualize the percentage of missing data in each column of the provided DataFrame.
-
-    Parameters:
-    -----------
-        raw_data (pd.DataFrame): The DataFrame to analyze for missing data.
-
-    Returns:
-    --------
-        None
-    """
-    missing_data = pd.DataFrame(raw_data.isnull().sum() / len(raw_data) * 100, columns=['% Missing'])
-
-    plt.figure(figsize=(12, 6))
-    plt.title("% of missing data in the columns")
-    plt.scatter(raw_data.columns, missing_data['% Missing'])
-    plt.xticks(rotation=90)
-    plt.xlabel("Column Name")
-    plt.ylabel("% Missing Data")
-    plt.tight_layout()
-    plt.show()
 
 def preprocess_expert_data(expert_data:pd.DataFrame, impute_data:bool=True, remove_d:bool=False, save_data:bool=False) -> pd.DataFrame:
     """
@@ -184,6 +161,115 @@ def generate_binary_combinations(num_features:int, num_samples:int) -> np.ndarra
     return np.random.randint(2, size=(num_samples, num_features))
 
 # -------------------------------------------
+# ---------------- PLOTTING -----------------
+# -------------------------------------------
+
+def plot_missing_data_per_column(raw_data:pd.DataFrame) -> None:
+    """
+    Visualize the percentage of missing data in each column of the provided DataFrame.
+
+    Parameters:
+    -----------
+        raw_data (pd.DataFrame): The DataFrame to analyze for missing data.
+
+    Returns:
+    --------
+        None
+    """
+    missing_data = pd.DataFrame(raw_data.isnull().sum() / len(raw_data) * 100, columns=['% Missing'])
+
+    plt.figure(figsize=(12, 6))
+    plt.title("% of missing data in the columns")
+    plt.scatter(raw_data.columns, missing_data['% Missing'])
+    plt.xticks(rotation=90)
+    plt.xlabel("Column Name")
+    plt.ylabel("% Missing Data")
+    plt.tight_layout()
+    plt.show()
+
+def plot_PCA(X_pca:pd.DataFrame) -> None:
+    """
+    Plot the results of PCA in a two-dimensional scatter plot.
+
+    Parameters:
+    -----------
+        X_pca (pd.DataFrame): The PCA-transformed data to plot.
+
+    Returns:
+    --------
+        None
+    """
+    X_pca['party_id'] = X_pca['party_id'].astype(str)
+    fig = px.scatter(X_pca, 
+                        x='PCA1', 
+                        y= 'PCA2',
+                        color="party_id",
+                        opacity=0.5,
+                        title="PCA Results: Two-dimensional Representation of Political Parties")
+    
+    fig.show()
+
+def plot_valid_area_2d(
+    pca_data:pd.DataFrame,
+    expert_data_aggregated:pd.DataFrame,
+    pca_model:PCA,
+    bounds:tuple[int,int]
+) -> None:
+    """
+    Plot an approximation of the valid area in the 2D PCA-transformed space. This is done by
+    generating a large number of binary combinations that represent extreme points within the
+    bounds of the original high-dimensional space, transforming these points using a fitted PCA model,
+    and then constructing and plotting a convex hull of the transformed extremes to represent
+    the valid area.
+
+    Parameters:
+    -----------
+        pca_data (DataFrame): The PCA-transformed data to be plotted.
+        expert_data_aggregated (DataFrame): The original aggregated high-dimensional data used for fitting the scaler.
+        pca_model (PCA): The trained PCA model used to transform the extreme samples.
+        bounds (tuple): The minimum and maximum bounds for each feature in the original space.
+
+    Returns:
+    --------
+        None
+    """
+    fig, ax = plt.subplots()
+
+    scaler = StandardScaler()
+    scaler.fit(expert_data_aggregated)
+
+    # Generate binary combinations
+    binary_combinations = generate_binary_combinations(52, 1000000)
+
+    # Map binary combinations to the actual bounds
+    extreme_samples = bounds[0] + (bounds[1] - bounds[0]) * binary_combinations
+
+    # Transform the extreme value samples using the fitted scaler and PCA
+    scaled_extreme_samples = scaler.transform(extreme_samples)
+    transformed_extremes = pca_model.transform(scaled_extreme_samples)
+
+    # Create a convex hull of the transformed extremes
+    hull = ConvexHull(transformed_extremes)
+
+    # Plot the PCA data for comparison
+    ax.scatter(pca_data['PCA1'], pca_data['PCA2'], alpha=0.5, label='PCA Data')
+
+    # Create a polygon to represent the convex hull
+    polygon_points = transformed_extremes[hull.vertices]
+    polygon = Polygon(polygon_points, closed=True, alpha=0.3,color='green', edgecolor='black', label='Valid Area')
+
+    # Add the polygon to the plot
+    ax.add_patch(polygon)
+
+    # Set labels and title
+    ax.set_xlabel('PCA Component 1')
+    ax.set_ylabel('PCA Component 2')
+    ax.set_title('2D PCA Space with Valid Area from high-dimensional space')
+
+    ax.legend()
+    plt.show()
+
+# -------------------------------------------
 # ---------------- MODELLING ----------------
 # -------------------------------------------
 
@@ -234,29 +320,7 @@ def perform_PCA(scaled_data:pd.DataFrame) -> tuple[pd.DataFrame, PCA, list]:
 
     return (pca_2d_data, pca_model, features.columns)
 
-def plot_PCA(X_pca:pd.DataFrame):
-    """
-    Plot the results of PCA in a two-dimensional scatter plot.
-
-    Parameters:
-    -----------
-        X_pca (pd.DataFrame): The PCA-transformed data to plot.
-
-    Returns:
-    --------
-        None
-    """
-    X_pca['party_id'] = X_pca['party_id'].astype(str)
-    fig = px.scatter(X_pca, 
-                        x='PCA1', 
-                        y= 'PCA2',
-                        color="party_id",
-                        opacity=0.5,
-                        title="PCA Results: Two-dimensional Representation of Political Parties")
-    
-    fig.show()
-
-def generate_new_samples(PCA_df:pd.DataFrame, plot_3D_dist:bool=False, plot_new_samples:bool=False):
+def generate_new_samples(PCA_df:pd.DataFrame, plot_3D_dist:bool=False, plot_new_samples:bool=False) -> np.ndarray:
     """
     Generate new samples from the PCA-transformed data using Gaussian Kernel Density Estimation.
 
@@ -349,71 +413,9 @@ def reverse_map_2d_to_high_dim(
 
     return original_features_df
 
-def plot_valid_area_2d(
-    pca_data:pd.DataFrame,
-    expert_data_aggregated:pd.DataFrame,
-    pca_model:PCA,
-    bounds:tuple[int,int]
-) -> None:
-    """
-    Plot an approximation of the valid area in the 2D PCA-transformed space. This is done by
-    generating a large number of binary combinations that represent extreme points within the
-    bounds of the original high-dimensional space, transforming these points using a fitted PCA model,
-    and then constructing and plotting a convex hull of the transformed extremes to represent
-    the valid area.
-
-    Parameters:
-    -----------
-        pca_data (DataFrame): The PCA-transformed data to be plotted.
-        expert_data_aggregated (DataFrame): The original aggregated high-dimensional data used for fitting the scaler.
-        pca_model (PCA): The trained PCA model used to transform the extreme samples.
-        bounds (tuple): The minimum and maximum bounds for each feature in the original space.
-
-    Returns:
-    --------
-        None
-    """
-    fig, ax = plt.subplots()
-
-    scaler = StandardScaler()
-    scaler.fit(expert_data_aggregated)
-
-    # Generate binary combinations
-    binary_combinations = generate_binary_combinations(52, 1000000)
-
-    # Map binary combinations to the actual bounds
-    extreme_samples = bounds[0] + (bounds[1] - bounds[0]) * binary_combinations
-
-    # Transform the extreme value samples using the fitted scaler and PCA
-    scaled_extreme_samples = scaler.transform(extreme_samples)
-    transformed_extremes = pca_model.transform(scaled_extreme_samples)
-
-    # Create a convex hull of the transformed extremes
-    hull = ConvexHull(transformed_extremes)
-
-    # Plot the PCA data for comparison
-    ax.scatter(pca_data['PCA1'], pca_data['PCA2'], alpha=0.5, label='PCA Data')
-
-    # Create a polygon to represent the convex hull
-    polygon_points = transformed_extremes[hull.vertices]
-    polygon = Polygon(polygon_points, closed=True, alpha=0.3,color='green', edgecolor='black', label='Valid Area')
-
-    # Add the polygon to the plot
-    ax.add_patch(polygon)
-
-    # Set labels and title
-    ax.set_xlabel('PCA Component 1')
-    ax.set_ylabel('PCA Component 2')
-    ax.set_title('2D PCA Space with Valid Area from high-dimensional space')
-
-    ax.legend()
-    plt.show()
-
-    return ax
-
 def main():
     """
-    Main function to process CHES2019 data.
+    Main function to process and analyze CHES2019 data.
     Task 1: Load and preprocess data.
     Task 2: Scale features and perform PCA.
     Task 3: Generate new samples from 2D distribution.
