@@ -4,7 +4,22 @@
 This project involves the analysis of 2019 Chapel Hill expert survey political party data using Python. It focuses on preprocessing, scaling, dimensionality reduction with PCA, generating new samples through statistical methods and painting the valid area from the high-dimensional space into 2D PCA-transformed space.
 
 ## Installation
-TODO Complete Dockerization
+
+Follow this guide to run the code locally using Docker.
+
+### Prerequisites
+
+- Ensure Git is installed on your system.
+- Ensure Docker Desktop is installed and running on your system.
+
+### Steps
+
+1. Clone this repository: `git clone https://github.com/MikkoNaerhi/Nordea-Data-Science-Assignment.git`
+2. Navigate to the repository directory: `cd Nordea-Data-Science-Assignment`
+2. Initiate Docker on your computer. 
+3. Build a Docker image from the Dockerfile: `docker build -t name .`
+4. Run the Docker container: `docker run name`
+
 
 ## Task 1: Data Loading and Preprocessing
 

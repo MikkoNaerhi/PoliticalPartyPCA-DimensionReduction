@@ -11,13 +11,26 @@ from scipy.spatial import ConvexHull
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(BASE_DIR, 'data')
+PLOT_DIR  = os.path.join(BASE_DIR, 'imgs')
 
 # -------------------------------------------
 # -------------- PREPROCESSING --------------
 # -------------------------------------------
 
-def get_file_path(filename:str) -> str:
-    return os.path.join(DATA_DIR, filename)
+def get_file_path(dir:str, filename:str) -> str:
+    """
+    Construct a file path by joining a directory and a filename.
+
+    Parameters:
+    -----------
+        dir (str): The directory path.
+        filename (str): The name of the file.
+
+    Returns:
+    --------
+        str: The combined file path.
+    """
+    return os.path.join(dir, filename)
 
 def load_data(expert_file_name:str, party_file_name:str) -> tuple[pd.DataFrame, pd.DataFrame]:
     """
@@ -32,8 +45,8 @@ def load_data(expert_file_name:str, party_file_name:str) -> tuple[pd.DataFrame, 
     --------
         tuple[pd.DataFrame, pd.DataFrame]: A tuple containing two DataFrames, the first for expert data and the second for party data.
     """
-    expert_raw_data = pd.read_csv(get_file_path(expert_file_name))
-    party_raw_data = pd.read_csv(get_file_path(party_file_name))
+    expert_raw_data = pd.read_csv(get_file_path(dir=DATA_DIR,filename=expert_file_name))
+    party_raw_data = pd.read_csv(get_file_path(dir=DATA_DIR,filename=party_file_name))
 
     return (expert_raw_data, party_raw_data)
 
@@ -78,7 +91,7 @@ def preprocess_expert_data(expert_data:pd.DataFrame, impute_data:bool=True, remo
 
     # Optionally save the cleaned data
     if save_data:
-        df_cleaned_numeric.to_csv(get_file_path('cleaned_data.csv'))
+        df_cleaned_numeric.to_csv(get_file_path(dir=DATA_DIR,filename='cleaned_data.csv'))
 
     # Set 'party_id' as the index
     df_cleaned_numeric.set_index('party_id',inplace=True)
@@ -185,7 +198,7 @@ def plot_missing_data_per_column(raw_data:pd.DataFrame) -> None:
     plt.xlabel("Column Name")
     plt.ylabel("% Missing Data")
     plt.tight_layout()
-    plt.show()
+    plt.savefig(get_file_path(dir=PLOT_DIR, filename='missing_data_per_column.png'))
 
 def plot_PCA(X_pca:pd.DataFrame) -> None:
     """
@@ -206,8 +219,7 @@ def plot_PCA(X_pca:pd.DataFrame) -> None:
                         color="party_id",
                         opacity=0.5,
                         title="PCA Results: Two-dimensional Representation of Political Parties")
-    
-    fig.show()
+    fig.write_html(get_file_path(dir=PLOT_DIR, filename='PCA_scatterplot_2d.html'))
 
 def plot_valid_area_2d(
     pca_data:pd.DataFrame,
@@ -236,7 +248,7 @@ def plot_valid_area_2d(
     fig, ax = plt.subplots()
 
     scaler = StandardScaler()
-    scaler.fit(expert_data_aggregated)
+    scaler.fit(expert_data_aggregated.values)
 
     # Generate binary combinations
     binary_combinations = generate_binary_combinations(52, 1000000)
@@ -256,7 +268,7 @@ def plot_valid_area_2d(
 
     # Create a polygon to represent the convex hull
     polygon_points = transformed_extremes[hull.vertices]
-    polygon = Polygon(polygon_points, closed=True, alpha=0.3,color='green', edgecolor='black', label='Valid Area')
+    polygon = Polygon(polygon_points, closed=True, alpha=0.3,color='green', label='Valid Area')
 
     # Add the polygon to the plot
     ax.add_patch(polygon)
@@ -267,7 +279,7 @@ def plot_valid_area_2d(
     ax.set_title('2D PCA Space with Valid Area from high-dimensional space')
 
     ax.legend()
-    plt.show()
+    plt.savefig(get_file_path(dir=PLOT_DIR, filename='valid_area_2d.png'))
 
 # -------------------------------------------
 # ---------------- MODELLING ----------------
@@ -287,7 +299,7 @@ def scale_data(data:pd.DataFrame) -> tuple[pd.DataFrame, StandardScaler]:
     """
     scaler = StandardScaler()
     data = data.reset_index()
-    scaled_data = scaler.fit_transform(data)
+    scaled_data = scaler.fit_transform(X=data.values)
     scaled_df = pd.DataFrame(index=data.index, data=scaled_data, columns=data.columns)
     scaled_df.index = data['party_id']
 
@@ -308,7 +320,7 @@ def perform_PCA(scaled_data:pd.DataFrame) -> tuple[pd.DataFrame, PCA, list]:
     
     features = scaled_data.drop(columns=['country','party'])
     pca_model = PCA(n_components=2)
-    projections = pca_model.fit_transform(X=features)
+    projections = pca_model.fit_transform(X=features.values)
     explained_variance = pca_model.explained_variance_ratio_
 
     print(f"Combined explained variance of the PCAs: {100*round(sum(explained_variance),3)} %.")
@@ -355,10 +367,12 @@ def generate_new_samples(PCA_df:pd.DataFrame, plot_3D_dist:bool=False, plot_new_
         ax.set_xlabel('PCA1')
         ax.set_ylabel('PCA2')
         ax.set_zlabel('Probability Density')
-        plt.show()
+        plt.savefig(get_file_path(dir=PLOT_DIR, filename='estimated_distribution.png'))
 
     # Sample 10 new points from the distribution
     new_samples = kde.resample(10).T
+
+    print("Generated samples:", new_samples)
 
     # Visualize the original PCA data and the new samples
     if plot_new_samples:
@@ -369,7 +383,7 @@ def generate_new_samples(PCA_df:pd.DataFrame, plot_3D_dist:bool=False, plot_new_
         plt.xlabel('Principal Component 1')
         plt.ylabel('Principal Component 2')
         plt.legend()
-        plt.show()
+        plt.savefig(get_file_path(dir=PLOT_DIR, filename='PCA_scatterplot_w_new_samples.png'))
 
     return new_samples
 
@@ -411,6 +425,8 @@ def reverse_map_2d_to_high_dim(
     # Change column party_id from float to integer
     original_features_df['party_id'] = original_features_df['party_id'].astype(int)
 
+    original_features_df.to_csv(get_file_path(dir=DATA_DIR, filename='high_dim_samples.csv'))
+
     return original_features_df
 
 def main():
@@ -441,8 +457,8 @@ def main():
     # TASK 3: Generating new samples
     new_samples = generate_new_samples(
         PCA_df=pca_result,
-        plot_3D_dist=False,
-        plot_new_samples=False
+        plot_3D_dist=True,
+        plot_new_samples=True
     )
 
     # TASK 4: Find feature values from the high-dimensional space that map to the sampled 2D points
