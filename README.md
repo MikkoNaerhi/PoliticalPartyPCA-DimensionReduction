@@ -42,7 +42,7 @@ Functions:
 * `plot_PCA`: Plots PCA results for a visual representation.
 
 ### Results of dimensionality reduction with PCA
-![PCA scatterplot](imgs/task_2_scatterplot.png)
+![PCA scatterplot](imgs/PCA_scatterplot.png)
 
 ## Estimate the distribution of the 2D points and generate a random sample of 10 new political parties
 
@@ -52,7 +52,7 @@ Functions:
 * `generate_new_samples`: Generates new samples using Gaussian Kernel Density Estimation.
 
 ### Estimated distribution of the 2D points
-![Estimated distribution](imgs/bivariate_dist.png)
+![Estimated distribution](imgs/estimated_distribution.png)
 
 ## Map 2D random samples back to high-dimensional space
 
@@ -69,5 +69,5 @@ Functions:
 * `plot_valid_area_2d`
 
 ### Valid area of the high-dimensional space in the 2D space
-![Valid area](imgs/task_5_2d_bound.png)
+![Valid area](imgs/valid_area_2d.png)
 
