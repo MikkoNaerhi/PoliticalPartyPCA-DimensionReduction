@@ -432,14 +432,9 @@ def reverse_map_2d_to_high_dim(
 def main():
     """
     Main function to process and analyze CHES2019 data.
-    Task 1: Load and preprocess data.
-    Task 2: Scale features and perform PCA.
-    Task 3: Generate new samples from 2D distribution.
-    Task 4: Find feature values from the high-dimensional space that map to the sampled 2D points.
-    Task 5: Paint the valid area from the high-dimensional space.
     """
 
-    # TASK 1: Data Loading and Preprocessing
+    # Data Loading and Preprocessing
     expert_file_name = 'CHES2019_experts.csv'
     party_file_name = 'CHES2019V3.csv'
     expert_raw_data, party_raw_data = load_data(expert_file_name, party_file_name)
@@ -448,23 +443,23 @@ def main():
     # Aggregate data by political party
     expert_data_aggregated = aggregate_pol_parties(expert_data=expert_data)
 
-    # TASK 2: Scaling and PCA
+    # Scaling and PCA
     scaled_data, scaler = scale_data(expert_data_aggregated)
     combined_data = combine_data(scaled_data, party_data)
     pca_result, pca_model, features = perform_PCA(combined_data)
     plot_PCA(pca_result)
 
-    # TASK 3: Generating new samples
+    # Generating new samples
     new_samples = generate_new_samples(
         PCA_df=pca_result,
         plot_3D_dist=True,
         plot_new_samples=True
     )
 
-    # TASK 4: Find feature values from the high-dimensional space that map to the sampled 2D points
+    # Find feature values from the high-dimensional space that map to the sampled 2D points
     approximated_features = reverse_map_2d_to_high_dim(new_samples, pca_model, scaler, features)
 
-    # TASK 5: Paint the valid area from the high-dimensional space
+    # Paint the valid area from the high-dimensional space
     bounds = (0,10)
     plot_valid_area_2d(
         pca_data=pca_result,
